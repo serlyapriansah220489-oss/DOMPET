@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f7f8fc">
+  <meta name="description" content="Catat pemasukan & pengeluaran langsung ke Google Sheets dari HP.">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://script.google.com https://script.googleusercontent.com https://*.googleusercontent.com; img-src 'self' data:; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+  <title>Dompet</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" href="icon-192.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Ikon (sprite SVG) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="g-brand" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3b82f6"/><stop offset="1" stop-color="#7c5cff"/></linearGradient>
+  </defs>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h12M9 12h12M9 18h12"/><path d="M4 6h.01M4 12h.01M4 18h.01" stroke-width="3"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 4v16h16"/><path d="M8.5 16v-3M13 16V9M17.5 16V6"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+  <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="3"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></symbol>
+  <symbol id="i-chev-r" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+  <symbol id="i-chev-d" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4Z"/><path d="m13.5 6.5 4 4"/></symbol>
+  <symbol id="i-in" viewBox="0 0 24 24"><path d="M17 7 7 17M7 8v9h9"/></symbol>
+  <symbol id="i-out" viewBox="0 0 24 24"><path d="M7 17 17 7M8 7h9v9"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></symbol>
+  <symbol id="i-offline" viewBox="0 0 24 24"><path d="m3 3 18 18"/><path d="M8.5 16.4a5 5 0 0 1 6.2-.6M5 12.9a10 10 0 0 1 4.3-2.6M19 12.9a10 10 0 0 0-2.6-1.8M2 8.8a15 15 0 0 1 3.7-2.4M22 8.8A15 15 0 0 0 10.4 5.1"/><path d="M12 20h.01" stroke-width="3"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="10" rx="2.5"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/></symbol>
+  <symbol id="i-logout" viewBox="0 0 24 24"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 17l-5-5 5-5M5 12h11"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3.5l1.9 5.1 5.1 1.9-5.1 1.9L12 17.5l-1.9-5.1L5 10.5l5.1-1.9Z"/><path d="M19 16v4M17 18h4"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M3 7l6 6 4-4 8 8"/><path d="M15 17h6v-6"/></symbol>
+  <symbol id="i-sheet" viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17M3.5 14.5h17M9.5 4v16"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M21 5H9l-6 7 6 7h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1Z"/><path d="m17 9-6 6M11 9l6 6"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.3 4.2 2.6 18a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 4.2a2 2 0 0 0-3.4 0Z"/><path d="M12 9.5v4.5M12 17.5h.01"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/></symbol>
+  <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M19 7.5V6a2.5 2.5 0 0 0-2.5-2.5h-11A2.5 2.5 0 0 0 3 6v12a2.5 2.5 0 0 0 2.5 2.5h13A2.5 2.5 0 0 0 21 18v-1.5"/><path d="M21 10.5h-4.5a2 2 0 0 0 0 4H21Z"/></symbol>
+</svg>
+
+<div class="bg-orbs" aria-hidden="true"><span class="o1"></span><span class="o2"></span><span class="o3"></span></div>
+
+<!-- ====================== LAYAR MASUK ====================== -->
+<section id="auth" class="auth" hidden>
+  <div class="auth-inner">
+    <div class="brand">
+      <div class="brand-mark"><svg class="ic"><use href="#i-wallet"/></svg></div>
+      <div>
+        <h1 class="brand-name">Dompet</h1>
+        <p class="brand-sub" id="authSub">Catat keuangan langsung ke spreadsheet-mu</p>
+      </div>
+    </div>
+
+    <div class="field" id="urlField">
+      <label for="apiUrl">URL Aplikasi Web (Apps Script)</label>
+      <div class="input-row">
+        <input id="apiUrl" type="url" inputmode="url" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" autocapitalize="off" spellcheck="false">
+        <button class="btn-soft sm" id="pasteBtn" type="button">Tempel</button>
+      </div>
+    </div>
+
+    <div class="pin-block">
+      <p class="pin-label" id="pinLabel">Masukkan PIN</p>
+      <div class="pin-dots" id="pinDots" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <p class="auth-msg" id="authMsg" role="alert"></p>
+    </div>
+
+    <div class="keypad" id="pinPad" aria-label="Tombol PIN">
+      <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button>
+      <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button>
+      <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
+      <span></span><button data-k="0">0</button><button data-k="back" aria-label="Hapus"><svg class="ic"><use href="#i-back"/></svg></button>
+    </div>
+
+    <div class="auth-links">
+      <button class="link" id="demoBtn" type="button">Coba dulu dengan data contoh</button>
+      <button class="link" id="changeServerBtn" type="button" hidden>Ganti alamat server</button>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== APLIKASI UTAMA ====================== -->
+<div id="main" class="main" hidden>
+  <div class="progress" id="progress" aria-hidden="true"></div>
+  <div class="demo-banner" id="demoBanner" hidden>
+    <span>Mode demo · data contoh, tidak tersimpan ke spreadsheet</span>
+    <button class="link" id="exitDemoBtn" type="button">Keluar</button>
+  </div>
+
+  <main class="views">
+    <!-- BERANDA -->
+    <section class="view" id="view-home" data-view="home" aria-label="Beranda">
+      <header class="page-head">
+        <div>
+          <p class="eyebrow" id="todayLabel"></p>
+          <h1 class="page-title" id="greet">Halo</h1>
+        </div>
+        <button class="sync-pill" id="syncPill" type="button" aria-label="Sinkronkan sekarang">
+          <span class="dot"></span><span id="syncText">Memuat…</span>
+        </button>
+      </header>
+      <div class="period-bar" data-period></div>
+      <div id="homeBody"></div>
+    </section>
+
+    <!-- RIWAYAT -->
+    <section class="view" id="view-history" data-view="history" aria-label="Riwayat">
+      <header class="page-head compact">
+        <h1 class="page-title">Riwayat</h1>
+      </header>
+      <div class="hist-tools">
+        <label class="search">
+          <svg class="ic"><use href="#i-search"/></svg>
+          <input id="histSearch" type="search" placeholder="Cari catatan, kategori, nominal…" enterkeyhint="search" autocomplete="off">
+        </label>
+        <div class="filter-row" id="histFilters"></div>
+      </div>
+      <div id="histSummary" class="hist-summary"></div>
+      <div id="histList" class="hist-list"></div>
+      <div id="histMore" class="hist-more"></div>
+    </section>
+
+    <!-- ANALISIS -->
+    <section class="view" id="view-stats" data-view="stats" aria-label="Analisis">
+      <header class="page-head compact">
+        <h1 class="page-title">Analisis</h1>
+      </header>
+      <div class="period-bar" data-period></div>
+      <div id="statsBody"></div>
+    </section>
+
+    <!-- PENGATURAN -->
+    <section class="view" id="view-settings" data-view="settings" aria-label="Pengaturan">
+      <header class="page-head compact">
+        <h1 class="page-title">Pengaturan</h1>
+      </header>
+      <div id="settingsBody"></div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav" aria-label="Navigasi utama">
+    <button class="nav-btn active" data-tab="home" type="button"><svg class="ic"><use href="#i-home"/></svg><span>Beranda</span></button>
+    <button class="nav-btn" data-tab="history" type="button"><svg class="ic"><use href="#i-list"/></svg><span>Riwayat</span></button>
+    <button class="fab" id="fab" type="button" aria-label="Tambah Transaksi"><svg class="ic"><use href="#i-plus"/></svg></button>
+    <button class="nav-btn" data-tab="stats" type="button"><svg class="ic"><use href="#i-chart"/></svg><span>Analisis</span></button>
+    <button class="nav-btn" data-tab="settings" type="button"><svg class="ic"><use href="#i-sliders"/></svg><span>Atur</span></button>
+  </nav>
+</div>
+
+<!-- ====================== LEMBAR (BOTTOM SHEET) ====================== -->
+<div class="scrim" id="scrim" hidden></div>
+
+<!-- Tambah / Edit transaksi -->
+<section class="sheet sheet-add" id="sheetAdd" role="dialog" aria-modal="true" aria-labelledby="addTitle" hidden>
+  <div class="grabber"></div>
+  <header class="sheet-head">
+    <h2 id="addTitle">Tambah Transaksi</h2>
+    <button class="icon-btn" data-close type="button" aria-label="Tutup"><svg class="ic"><use href="#i-x"/></svg></button>
+  </header>
+
+  <div class="seg" id="typeSeg" role="radiogroup" aria-label="Jenis transaksi">
+    <span class="seg-ind"></span>
+    <button type="button" role="radio" data-type="out">Pengeluaran</button>
+    <button type="button" role="radio" data-type="in">Pemasukan</button>
+  </div>
+
+  <div class="amount-box" id="amountBox">
+    <span class="amount-cur">Rp</span>
+    <output class="amount" id="amountOut" aria-live="polite">0</output>
+  </div>
+  <p class="field-err" id="addErr" role="alert"></p>
+
+  <div class="add-scroll">
+    <p class="mini-label">Kategori</p>
+    <div class="chips" id="catChips"></div>
+  </div>
+
+  <div class="meta-row">
+    <label class="chip chip-date" id="dateChip">
+      <svg class="ic"><use href="#i-calendar"/></svg>
+      <span id="dateLabel">Hari ini</span>
+      <input type="date" id="dateInput" aria-label="Pilih tanggal">
+    </label>
+    <button class="chip" id="dateQuick" type="button">Kemarin</button>
+    <input class="note-input" id="noteInput" type="text" placeholder="Catatan (opsional)" maxlength="200" enterkeyhint="done" autocomplete="off" aria-label="Catatan (opsional)">
+  </div>
+
+  <div class="keypad amount-pad" id="amountPad" aria-label="Tombol nominal">
+    <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button>
+    <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button>
+    <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
+    <button data-k="000">000</button><button data-k="0">0</button><button data-k="back" aria-label="Hapus angka"><svg class="ic"><use href="#i-back"/></svg></button>
+  </div>
+  <button class="btn-primary block" id="saveBtn" type="button"><span>Simpan</span></button>
+</section>
+
+<!-- Detail transaksi -->
+<section class="sheet" id="sheetDetail" role="dialog" aria-modal="true" aria-labelledby="detailTitle" hidden>
+  <div class="grabber"></div>
+  <header class="sheet-head">
+    <h2 id="detailTitle">Detail Transaksi</h2>
+    <button class="icon-btn" data-close type="button" aria-label="Tutup"><svg class="ic"><use href="#i-x"/></svg></button>
+  </header>
+  <div id="detailBody"></div>
+  <div class="sheet-actions" id="detailActions"></div>
+</section>
+
+<!-- Pilih periode kustom -->
+<section class="sheet" id="sheetPeriod" role="dialog" aria-modal="true" aria-labelledby="periodTitle" hidden>
+  <div class="grabber"></div>
+  <header class="sheet-head">
+    <h2 id="periodTitle">Pilih Periode</h2>
+    <button class="icon-btn" data-close type="button" aria-label="Tutup"><svg class="ic"><use href="#i-x"/></svg></button>
+  </header>
+  <div class="preset-list" id="presetList"></div>
+  <div class="range-row">
+    <label class="field"><span>Dari</span><input type="date" id="rangeFrom"></label>
+    <label class="field"><span>Sampai</span><input type="date" id="rangeTo"></label>
+  </div>
+  <p class="field-err" id="rangeErr"></p>
+  <button class="btn-primary block" id="rangeApply" type="button">Terapkan</button>
+</section>
+
+<!-- Pemetaan kolom -->
+<section class="sheet" id="sheetMap" role="dialog" aria-modal="true" aria-labelledby="mapTitle" hidden>
+  <div class="grabber"></div>
+  <header class="sheet-head">
+    <h2 id="mapTitle">Struktur Sheet</h2>
+    <button class="icon-btn" data-close type="button" aria-label="Tutup"><svg class="ic"><use href="#i-x"/></svg></button>
+  </header>
+  <div id="mapBody"></div>
+</section>
+
+<!-- Dialog konfirmasi -->
+<div class="dialog-wrap" id="dialog" hidden>
+  <div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="dlgTitle" aria-describedby="dlgMsg">
+    <div class="dlg-icon" id="dlgIcon"></div>
+    <h3 id="dlgTitle"></h3>
+    <p id="dlgMsg"></p>
+    <div class="dlg-actions">
+      <button class="btn-soft" id="dlgCancel" type="button">Batal</button>
+      <button class="btn-danger" id="dlgOk" type="button">Hapus</button>
+    </div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script src="api.js"></script>
+<script src="charts.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
