@@ -4,10 +4,10 @@
    Data transaksi TIDAK pernah disimpan di sini (selalu lewat Apps Script).
    Naikkan VERSION setiap kali file aplikasi diperbarui.
    ===================================================================== */
-const VERSION = '1.0.0';
+const VERSION = '1.1.0';
 const CACHE = 'dompet-' + VERSION;
 const SHELL = [
-  './', './index.html', './style.css', './api.js', './charts.js', './app.js', './manifest.webmanifest',
+  './', './index.html', './style.css', './api.js', './charts.js', './app.js', './assets.js', './manifest.webmanifest',
   './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png'
 ];
 

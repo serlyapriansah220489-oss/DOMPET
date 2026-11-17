@@ -52,6 +52,12 @@
   <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.3 4.2 2.6 18a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 4.2a2 2 0 0 0-3.4 0Z"/><path d="M12 9.5v4.5M12 17.5h.01"/></symbol>
   <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></symbol>
   <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/></symbol>
+  <symbol id="i-coins" viewBox="0 0 24 24"><ellipse cx="9" cy="6.5" rx="6" ry="2.8"/><path d="M3 6.5v4c0 1.55 2.69 2.8 6 2.8s6-1.25 6-2.8v-4"/><path d="M3 10.5v4c0 1.55 2.69 2.8 6 2.8 1.06 0 2.06-.13 2.92-.35"/><ellipse cx="16" cy="15" rx="5" ry="2.4"/><path d="M11 15v3.2c0 1.33 2.24 2.4 5 2.4s5-1.07 5-2.4V15"/></symbol>
+  <symbol id="i-gold" viewBox="0 0 24 24"><path d="M2.5 19.5h9l-2-5.5h-5z"/><path d="M12.5 19.5h9l-2-5.5h-5z"/><path d="M7.5 13.5h9l-2-5.5h-5z"/><path d="M12 3.5v1.5M17.5 5l-1 1M6.5 5l1 1"/></symbol>
+  <symbol id="i-bank" viewBox="0 0 24 24"><path d="M3 9.5 12 4l9 5.5"/><path d="M5 10v7.5M9.67 10v7.5M14.33 10v7.5M19 10v7.5M3 20h18"/></symbol>
+  <symbol id="i-cash" viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.6"/><path d="M6 9.5h.01M18 14.5h.01" stroke-width="3"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><rect x="6.5" y="2.5" width="11" height="19" rx="2.8"/><path d="M10.5 18h3"/></symbol>
+  <symbol id="i-swap" viewBox="0 0 24 24"><path d="M4 8h15l-3.5-3.5"/><path d="M20 16H5l3.5 3.5"/></symbol>
   <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M19 7.5V6a2.5 2.5 0 0 0-2.5-2.5h-11A2.5 2.5 0 0 0 3 6v12a2.5 2.5 0 0 0 2.5 2.5h13A2.5 2.5 0 0 0 21 18v-1.5"/><path d="M21 10.5h-4.5a2 2 0 0 0 0 4H21Z"/></symbol>
 </svg>
 
@@ -112,9 +118,12 @@
           <p class="eyebrow" id="todayLabel"></p>
           <h1 class="page-title" id="greet">Halo</h1>
         </div>
-        <button class="sync-pill" id="syncPill" type="button" aria-label="Sinkronkan sekarang">
-          <span class="dot"></span><span id="syncText">Memuat…</span>
-        </button>
+        <div class="head-actions">
+          <button class="sync-pill" id="syncPill" type="button" aria-label="Sinkronkan sekarang">
+            <span class="dot"></span><span id="syncText">Memuat…</span>
+          </button>
+          <button class="icon-btn glass" data-goto="settings" type="button" aria-label="Pengaturan"><svg class="ic"><use href="#i-sliders"/></svg></button>
+        </div>
       </header>
       <div class="period-bar" data-period></div>
       <div id="homeBody"></div>
@@ -146,6 +155,14 @@
       <div id="statsBody"></div>
     </section>
 
+    <!-- ASET -->
+    <section class="view" id="view-assets" data-view="assets" aria-label="Aset">
+      <header class="page-head compact">
+        <h1 class="page-title">Aset</h1>
+      </header>
+      <div id="assetsBody"></div>
+    </section>
+
     <!-- PENGATURAN -->
     <section class="view" id="view-settings" data-view="settings" aria-label="Pengaturan">
       <header class="page-head compact">
@@ -159,8 +176,8 @@
     <button class="nav-btn active" data-tab="home" type="button"><svg class="ic"><use href="#i-home"/></svg><span>Beranda</span></button>
     <button class="nav-btn" data-tab="history" type="button"><svg class="ic"><use href="#i-list"/></svg><span>Riwayat</span></button>
     <button class="fab" id="fab" type="button" aria-label="Tambah Transaksi"><svg class="ic"><use href="#i-plus"/></svg></button>
+    <button class="nav-btn" data-tab="assets" type="button"><svg class="ic"><use href="#i-coins"/></svg><span>Aset</span></button>
     <button class="nav-btn" data-tab="stats" type="button"><svg class="ic"><use href="#i-chart"/></svg><span>Analisis</span></button>
-    <button class="nav-btn" data-tab="settings" type="button"><svg class="ic"><use href="#i-sliders"/></svg><span>Atur</span></button>
   </nav>
 </div>
 
@@ -175,7 +192,7 @@
     <button class="icon-btn" data-close type="button" aria-label="Tutup"><svg class="ic"><use href="#i-x"/></svg></button>
   </header>
 
-  <div class="seg" id="typeSeg" role="radiogroup" aria-label="Jenis transaksi">
+  <div class="seg" id="typeSeg" role="radiogroup" aria-label="Jenis transaksi" style="--n:2;--i:0">
     <span class="seg-ind"></span>
     <button type="button" role="radio" data-type="out">Pengeluaran</button>
     <button type="button" role="radio" data-type="in">Pemasukan</button>
@@ -188,8 +205,20 @@
   <p class="field-err" id="addErr" role="alert"></p>
 
   <div class="add-scroll">
-    <p class="mini-label">Kategori</p>
-    <div class="chips" id="catChips"></div>
+    <div id="catSection">
+      <p class="mini-label">Kategori</p>
+      <div class="chips" id="catChips"></div>
+      <div id="accSection" hidden>
+        <p class="mini-label" id="accLabel">Akun</p>
+        <div class="chips" id="accChips"></div>
+      </div>
+    </div>
+    <div id="tfSection" hidden>
+      <p class="mini-label">Dari akun</p>
+      <div class="chips" id="tfFrom"></div>
+      <p class="mini-label">Ke akun</p>
+      <div class="chips" id="tfTo"></div>
+    </div>
   </div>
 
   <div class="meta-row">
@@ -248,6 +277,16 @@
   <div id="mapBody"></div>
 </section>
 
+<!-- Lembar serbaguna: akun, emas, harga -->
+<section class="sheet" id="sheetForm" role="dialog" aria-modal="true" aria-labelledby="formTitle" hidden>
+  <div class="grabber"></div>
+  <header class="sheet-head">
+    <h2 id="formTitle">Form</h2>
+    <button class="icon-btn" data-close type="button" aria-label="Tutup"><svg class="ic"><use href="#i-x"/></svg></button>
+  </header>
+  <div id="formBody"></div>
+</section>
+
 <!-- Dialog konfirmasi -->
 <div class="dialog-wrap" id="dialog" hidden>
   <div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="dlgTitle" aria-describedby="dlgMsg">
@@ -266,5 +305,6 @@
 <script src="api.js"></script>
 <script src="charts.js"></script>
 <script src="app.js"></script>
+<script src="assets.js"></script>
 </body>
 </html>

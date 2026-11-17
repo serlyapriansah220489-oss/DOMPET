@@ -4,7 +4,7 @@
    ===================================================================== */
 'use strict';
 
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.1.0';
 
 /* ---------- Penyimpanan lokal (HP) ---------- */
 const Store = {
@@ -26,8 +26,8 @@ const Store = {
 /* ---------- Utilitas bersama ---------- */
 const Util = {
   /** Sidik jari baris — HARUS identik dengan fp_() di Code.gs */
-  fp(d, a, c, n) {
-    const s = d + '|' + a + '|' + c + '|' + n;
+  fp(d, a, c, n, acc) {
+    const s = d + '|' + a + '|' + c + '|' + n + (acc ? '|' + acc : '');
     let h = 0x811c9dc5;
     for (let i = 0; i < s.length; i++) {
       h ^= s.charCodeAt(i);
@@ -161,21 +161,52 @@ const Demo = {
       if (day === 20) inc.push([s, between(150000, 450000, 500), 'Investasi', 'Bagi hasil emas']);
       if (rnd() < 0.05) inc.push([s, between(500000, 2500000, 50000), 'Honor', pick(['Honor narasumber', 'Honor tutor', 'Honor ahli'])]);
     }
-    const toRows = (list) => list.map((r, i) => ({ row: i + 2, date: r[0], amount: r[1], category: r[2], note: r[3] }));
-    return { in: toRows(inc), out: toRows(out) };
+    const accOut = { 'Makan & Minum': ['Tunai', 'GoPay'], Transportasi: ['GoPay', 'Tunai'], Hiburan: ['BCA', 'GoPay'] };
+    const startDate = iso(new Date(today.getTime() - 60 * 864e5));
+    const toRows = (list, k) => list.map((r, i) => ({ row: i + 2, date: r[0], amount: r[1], category: r[2], note: r[3],
+      account: r[0] < startDate ? '' : (k === 'in' ? 'BCA' : (accOut[r[2]] || ['BCA'])[i % (accOut[r[2]] || ['BCA']).length]) }));
+    const db = { in: toRows(inc, 'in'), out: toRows(out, 'out') };
+    db.accounts = [
+      { name: 'BCA', type: 'Bank', opening: 12500000, openingDate: startDate, note: 'Rekening gaji', status: 'Aktif' },
+      { name: 'Tunai', type: 'Tunai', opening: 850000, openingDate: startDate, note: '', status: 'Aktif' },
+      { name: 'GoPay', type: 'E-wallet', opening: 250000, openingDate: startDate, note: '', status: 'Aktif' }
+    ];
+    db.tf = [];
+    for (let i = 55; i > 0; i -= 7) {
+      const d = iso(new Date(today.getTime() - i * 864e5));
+      db.tf.push({ row: db.tf.length + 2, date: d, amount: 1000000, from: 'BCA', to: 'Tunai', note: 'Tarik tunai ATM' });
+      db.tf.push({ row: db.tf.length + 2, date: d, amount: 300000, from: 'BCA', to: 'GoPay', note: 'Top up' });
+    }
+    const g1 = iso(new Date(today.getTime() - 120 * 864e5)); const g2 = iso(new Date(today.getTime() - 40 * 864e5));
+    db.gold = [
+      { id: 'EM-0001', date: g1, type: 'Antam', purity: '24K (999,9)', pieces: 2, grams: 10, pricePerGram: 1480000, total: 14800000, place: 'Butik Antam', account: '', cert: 'ABC 123456', storage: 'Brankas rumah', note: 'Tabungan mobil', status: 'Dimiliki', soldDate: '', soldTotal: 0, soldAccount: '' },
+      { id: 'EM-0002', date: g2, type: 'Antam', purity: '24K (999,9)', pieces: 1, grams: 5, pricePerGram: 1620000, total: 8100000, place: 'Butik Antam', account: 'BCA', cert: 'ABC 778899', storage: 'Brankas rumah', note: '', status: 'Dimiliki', soldDate: '', soldTotal: 0, soldAccount: '' },
+      { id: 'EM-0003', date: g2, type: 'Emas digital', purity: '24K (999,9)', pieces: 1, grams: 2.5, pricePerGram: 1600000, total: 4000000, place: 'Pegadaian Digital', account: 'BCA', cert: '', storage: 'Aplikasi/digital', note: '', status: 'Dimiliki', soldDate: '', soldTotal: 0, soldAccount: '' }
+    ];
+    db.out.push({ row: db.out.length + 2, date: g2, amount: 8100000, category: 'Investasi Emas', note: 'Beli emas Antam 5 g · Butik Antam [EM-0002]', account: 'BCA' });
+    db.out.push({ row: db.out.length + 2, date: g2, amount: 4000000, category: 'Investasi Emas', note: 'Beli emas Emas digital 2,5 g · Pegadaian Digital [EM-0003]', account: 'BCA' });
+    db.prices = [{ date: iso(today), type: 'Antam', price: 2150000 }, { date: iso(today), type: 'Emas digital', price: 2080000 }];
+    return db;
   },
 
   snapshot() {
     const db = this.load();
-    const pack = (list) => list.map((r) => [r.row, r.date, r.amount, r.category, r.note, Util.fp(r.date, r.amount, r.category, r.note)]);
+    const pack = (list) => list.map((r) => [r.row, r.date, r.amount, r.category, r.note, Util.fp(r.date, r.amount, r.category, r.note, r.account), r.account || '']);
     const st = (k, name) => ({
-      sheetName: name, headerRow: 1, headers: ['Tanggal', 'Kategori', 'Keterangan', 'Jumlah'],
-      date: 1, category: 2, note: 3, amount: 4, source: 'auto', ready: true,
+      sheetName: name, headerRow: 1, headers: ['Tanggal', 'Kategori', 'Keterangan', 'Jumlah', 'Akun'],
+      date: 1, category: 2, note: 3, amount: 4, account: 5, source: 'auto', ready: true,
       txCount: db[k].length, lastTxRow: db[k].length + 1, footer: false, negative: false, formulaCols: []
     });
     return {
       ok: true,
       data: { in: pack(db.in), out: pack(db.out) },
+      assets: {
+        enabled: true,
+        accounts: (db.accounts || []).map((a) => [a.name, a.type, a.opening, a.openingDate, a.note, a.status]),
+        transfers: (db.tf || []).map((t) => [t.row, t.date, t.amount, t.from, t.to, t.note, Util.fp(t.date, t.amount, t.from, t.note, t.to)]),
+        gold: (db.gold || []).map((g) => Object.assign({}, g)),
+        prices: (db.prices || []).map((p) => [p.date, p.type, p.price])
+      },
       meta: { ssName: 'Keuangan (data contoh)', tz: 'Asia/Jakarta', version: APP_VERSION, serverTime: new Date().toISOString(),
         structure: { in: st('in', 'Pemasukan'), out: st('out', 'Pengeluaran') } }
     };
@@ -192,31 +223,92 @@ const Demo = {
       case 'add': {
         const results = (p.txs || []).map((tx) => {
           if (!(tx.amount > 0)) return { cid: tx.cid, ok: false, error: 'Nominal harus lebih dari 0.' };
+          if (tx.type === 'tf') {
+            if (!tx.from || !tx.to || tx.from === tx.to) return { cid: tx.cid, ok: false, error: 'Akun asal dan tujuan tidak boleh sama.' };
+            db.tf.push({ row: db.tf.length + 2, date: tx.date, amount: tx.amount, from: tx.from, to: tx.to, note: tx.note || '' });
+            return { cid: tx.cid, ok: true, row: db.tf.length + 1 };
+          }
           const list = db[tx.type];
           const row = list.length + 2;
-          list.push({ row, date: tx.date, amount: Math.round(tx.amount * 100) / 100, category: tx.category, note: tx.note || '' });
+          list.push({ row, date: tx.date, amount: Math.round(tx.amount * 100) / 100, category: tx.category, note: tx.note || '', account: tx.account || '' });
           return { cid: tx.cid, ok: true, row };
         });
         this.persist();
         return Object.assign(this.snapshot(), { results });
       }
       case 'update': {
-        const tx = p.tx; const src = db[tx.origType];
+        const tx = p.tx;
+        if (tx.type === 'tf') {
+          const t = db.tf.find((x) => x.row === tx.row);
+          if (!t || Util.fp(t.date, t.amount, t.from, t.note, t.to) !== tx.fp) throw new ApiError('Data di spreadsheet sudah berubah. Memuat ulang…', 'STALE');
+          Object.assign(t, { date: tx.date, amount: tx.amount, from: tx.from, to: tx.to, note: tx.note });
+          this.persist();
+          return this.snapshot();
+        }
+        const src = db[tx.origType];
         const idx = src.findIndex((r) => r.row === tx.row);
         const r = src[idx];
-        if (!r || Util.fp(r.date, r.amount, r.category, r.note) !== tx.fp) throw new ApiError('Data di spreadsheet sudah berubah. Memuat ulang…', 'STALE');
-        if (tx.origType === tx.type) Object.assign(r, { date: tx.date, amount: tx.amount, category: tx.category, note: tx.note });
+        if (!r || Util.fp(r.date, r.amount, r.category, r.note, r.account) !== tx.fp) throw new ApiError('Data di spreadsheet sudah berubah. Memuat ulang…', 'STALE');
+        if (tx.origType === tx.type) Object.assign(r, { date: tx.date, amount: tx.amount, category: tx.category, note: tx.note, account: tx.account || '' });
         else {
           this.removeAt(tx.origType, idx);
-          db[tx.type].push({ row: db[tx.type].length + 2, date: tx.date, amount: tx.amount, category: tx.category, note: tx.note });
+          db[tx.type].push({ row: db[tx.type].length + 2, date: tx.date, amount: tx.amount, category: tx.category, note: tx.note, account: tx.account || '' });
         }
         this.persist();
         return this.snapshot();
       }
       case 'delete': {
+        if (p.type === 'tf') {
+          const i = db.tf.findIndex((x) => x.row === p.row);
+          if (i < 0) throw new ApiError('Data di spreadsheet sudah berubah. Memuat ulang…', 'STALE');
+          db.tf.splice(i, 1); db.tf.forEach((x, j) => { x.row = j + 2; });
+          this.persist();
+          return this.snapshot();
+        }
         const list = db[p.type]; const idx = list.findIndex((r) => r.row === p.row); const r = list[idx];
-        if (!r || Util.fp(r.date, r.amount, r.category, r.note) !== p.fp) throw new ApiError('Data di spreadsheet sudah berubah. Memuat ulang…', 'STALE');
+        if (!r || Util.fp(r.date, r.amount, r.category, r.note, r.account) !== p.fp) throw new ApiError('Data di spreadsheet sudah berubah. Memuat ulang…', 'STALE');
         this.removeAt(p.type, idx);
+        this.persist();
+        return this.snapshot();
+      }
+      case 'accountSave': {
+        const a = p.acc; const i = db.accounts.findIndex((x) => x.name === a.origName);
+        const obj = { name: a.name, type: a.type, opening: a.opening, openingDate: a.openingDate, note: a.note || '', status: a.archived ? 'Arsip' : 'Aktif' };
+        if (i >= 0) db.accounts[i] = obj; else db.accounts.push(obj);
+        this.persist();
+        return this.snapshot();
+      }
+      case 'accountDelete': throw new ApiError('Di mode demo, akun tidak bisa dihapus. Arsipkan saja.', 'IN_USE');
+      case 'goldSave': {
+        const g = p.gold; const total = g.total || g.pricePerGram * g.grams;
+        const data = Object.assign({}, g, { total, pricePerGram: g.pricePerGram || Math.round(total / g.grams) });
+        delete data.linkExpense; delete data.sale;
+        const cur = db.gold.find((x) => x.id === g.id);
+        if (cur) Object.assign(cur, data);
+        else {
+          const id = 'EM-' + String(db.gold.length + 1).padStart(4, '0');
+          db.gold.push(Object.assign(data, { id, status: 'Dimiliki', soldDate: '', soldTotal: 0, soldAccount: '' }));
+          if (g.linkExpense !== false) db.out.push({ row: db.out.length + 2, date: g.date, amount: total, category: 'Investasi Emas', note: `Beli emas ${g.type} ${g.grams} g [${id}]`, account: g.account || '' });
+        }
+        this.persist();
+        return this.snapshot();
+      }
+      case 'goldSell': {
+        const s = p.sale; const g = db.gold.find((x) => x.id === s.id);
+        if (!g) throw new ApiError('Catatan emas tidak ditemukan.', 'STALE');
+        Object.assign(g, { status: 'Dijual', soldDate: s.date, soldTotal: s.total, soldAccount: s.account || '' });
+        if (s.linkIncome !== false) db.in.push({ row: db.in.length + 2, date: s.date, amount: s.total, category: 'Penjualan Emas', note: `Jual emas ${g.type} ${g.grams} g [${g.id}]`, account: s.account || '' });
+        this.persist();
+        return this.snapshot();
+      }
+      case 'goldDelete': {
+        db.gold = db.gold.filter((x) => x.id !== p.id);
+        ['in', 'out'].forEach((k) => { db[k] = db[k].filter((r) => !(r.note || '').includes('[' + p.id + ']')); db[k].forEach((r, j) => { r.row = j + 2; }); });
+        this.persist();
+        return this.snapshot();
+      }
+      case 'priceSave': {
+        (p.prices || []).forEach((x) => db.prices.push({ date: x.date, type: x.type, price: x.price }));
         this.persist();
         return this.snapshot();
       }
