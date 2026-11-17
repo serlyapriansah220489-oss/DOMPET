@@ -3,6 +3,8 @@
    ===================================================================== */
 'use strict';
 
+const APP_JS_VERSION = '1.1.1';
+
 /* ---------- Helper DOM ---------- */
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
@@ -259,8 +261,78 @@ function stats(r) {
    RENDER
    ===================================================================== */
 function renderCurrent() {
-  ({ home: renderHome, history: renderHistory, stats: renderStats, settings: renderSettings, assets: renderAssets })[S.tab]();
+  const views = { home: renderHome, history: renderHistory, stats: renderStats, settings: renderSettings, assets: typeof renderAssets === 'function' ? renderAssets : null };
+  try {
+    const fn = views[S.tab];
+    if (!fn) throw new Error('Bagian tampilan "' + S.tab + '" belum termuat');
+    fn();
+  } catch (e) {
+    console.error(e);
+    showRenderError(e);
+  }
   updateSyncPill();
+}
+
+/** Bila tampilan gagal (mis. file versi lama tercampur), tampilkan pesan + tombol pemulihan, bukan layar kosong */
+function showRenderError(e) {
+  const target = $({ home: '#homeBody', history: '#histList', stats: '#statsBody', settings: '#settingsBody', assets: '#assetsBody' }[S.tab] || '#homeBody');
+  if (!target) return;
+  target.innerHTML = `<div class="card empty"><div class="empty-art">${icon('alert')}</div><h3>Tampilan gagal dimuat</h3>
+    <p>Biasanya karena file versi lama masih tersimpan di HP. Data dan antreanmu aman.</p>
+    <button class="btn-primary" data-action="hard-reload" type="button">${icon('refresh')}Muat ulang aplikasi</button>
+    <p class="card-sub" style="margin-top:12px">${esc(e && e.message ? e.message : e)}</p></div>`;
+}
+
+/** Hapus cache tampilan & service worker, lalu muat ulang. Data (token, antrean, cache data) tidak disentuh. */
+async function hardReload() {
+  try {
+    if ('serviceWorker' in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map((r) => r.unregister()));
+    }
+  } catch (e) { /* abaikan */ }
+  try {
+    if (window.caches) {
+      const keys = await caches.keys();
+      await Promise.all(keys.filter((k) => k.indexOf('dompet-') === 0).map((k) => caches.delete(k)));
+    }
+  } catch (e) { /* abaikan */ }
+  location.reload();
+}
+
+/* ---------- Pembaruan aplikasi ----------
+   Setiap kali dibuka, aplikasi memeriksa versi baru di server. Versi baru diunduh utuh
+   di latar belakang; begitu siap, aplikasi memuat ulang sendiri saat tidak ada lembar
+   input yang terbuka (isian yang sedang diketik tidak pernah hilang). */
+let updateReady = false;
+function setupServiceWorker() {
+  try {
+    if (window.DOMPET_PREVIEW || window.DOMPET_GAS || !('serviceWorker' in navigator)) return;
+    if (!(location.protocol === 'https:' || location.hostname === 'localhost')) return;
+    const hadController = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!hadController || updateReady) return;   // pemasangan pertama tidak perlu dimuat ulang
+      updateReady = true;
+      applyUpdate();
+    });
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' })
+      .then((reg) => reg.update())
+      .catch(() => { /* offline / gagal: dicoba lagi saat dibuka berikutnya */ });
+  } catch (e) { /* abaikan */ }
+}
+function applyUpdate() {
+  if (!updateReady) return;
+  const idle = !sheetStack.length && $('#dialog').hidden && !S.syncing && !F.saving;
+  if (!idle) return;                     // dicoba lagi saat lembar ditutup / sinkron selesai
+  updateReady = false;
+  location.reload();
+}
+
+/** Semua file tampilan harus satu versi; jika tidak, muat ulang bersih sekali per sesi */
+function versionMismatch() {
+  const meta = document.querySelector('meta[name="dompet-version"]');
+  const vs = [meta ? meta.content : '?', APP_VERSION, APP_JS_VERSION, typeof ASSETS_JS_VERSION !== 'undefined' ? ASSETS_JS_VERSION : 'hilang'];
+  return vs.some((v) => v !== vs[0]) ? vs : null;
 }
 
 function switchTab(tab) {
@@ -657,6 +729,7 @@ function renderSettings() {
       <li class="set-item"><span class="bub">${icon('lock')}</span><div class="txt"><div class="k">Kunci aplikasi</div><div class="s">Minta PIN saat dibuka lagi</div></div><button class="btn-soft sm" data-action="lock" type="button">Kunci</button></li>
       <li class="set-item danger"><span class="bub">${icon('logout')}</span><div class="txt"><div class="k">Putuskan perangkat ini</div><div class="s">${window.DOMPET_GAS ? 'Hapus sesi & salinan data di HP ini.' : 'Hapus alamat server & data lokal di HP.'} Spreadsheet tidak terpengaruh.</div></div><button class="btn-soft sm" data-action="disconnect" type="button">Putuskan</button></li>`;
   }
+  html += `<li class="set-item"><span class="bub">${icon('refresh')}</span><div class="txt"><div class="k">Muat ulang aplikasi</div><div class="s">Ambil versi terbaru dan bersihkan cache tampilan. Data & antrean aman.</div></div><button class="btn-soft sm" data-action="hard-reload" type="button">Muat ulang</button></li>`;
   html += `</ul></div><p class="app-foot">Dompet v${APP_VERSION} · datamu tersimpan di Google Sheets milikmu</p>`;
   $('#settingsBody').innerHTML = html;
 }
@@ -699,6 +772,7 @@ async function sync() {
   } finally {
     S.syncing = false;
     renderCurrent();
+    applyUpdate();
   }
 }
 
@@ -732,6 +806,7 @@ async function flushQueue(opts = {}) {
       invalidate();
       renderCurrent();
       if (Queue.sendable().length && S.syncState === 'ok') setTimeout(() => flushQueue(), 400);
+      else setTimeout(applyUpdate, 1800);   // beri waktu notifikasi "Tersimpan" terbaca
     }
   })();
   return flushing;
@@ -788,7 +863,7 @@ function closeSheet(fromPop) {
   el.classList.remove('on');
   el.style.transform = '';
   if (!sheetStack.length) $('#scrim').classList.remove('on');
-  setTimeout(() => { if (!sheetStack.includes(id)) el.hidden = true; if (!sheetStack.length) $('#scrim').hidden = true; }, 340);
+  setTimeout(() => { if (!sheetStack.includes(id)) el.hidden = true; if (!sheetStack.length) { $('#scrim').hidden = true; applyUpdate(); } }, 340);
   if (!fromPop && historyOk && history.state && history.state.sheet === id) { ignorePop++; history.back(); }
   if (document.activeElement && el.contains(document.activeElement)) document.activeElement.blur();
 }
@@ -1511,6 +1586,7 @@ function bindEvents() {
       case 'map-save': return saveMap(false);
       case 'map-reset': return saveMap(true);
       case 'lock': return lockApp();
+      case 'hard-reload': return hardReload();
       case 'change-pin': return openChangePin();
       case 'pin-save': return saveNewPin();
       case 'disconnect': return disconnectDevice();
@@ -1620,16 +1696,21 @@ function enterApp() {
 }
 
 function boot() {
+  if (!window.DOMPET_PREVIEW && !window.DOMPET_GAS) {
+    const mm = versionMismatch();
+    if (mm) {
+      let tried = false;
+      try { tried = sessionStorage.getItem('dompet.vfix') === '1'; sessionStorage.setItem('dompet.vfix', '1'); } catch (e) { tried = true; }
+      console.warn('Versi file tidak sama:', mm.join(' / '));
+      if (!tried) { hardReload(); return; }
+    }
+  }
   if (window.DOMPET_GAS && (S.cfg.api !== 'gas' || S.cfg.demo)) {
     S.cfg = Object.assign({}, S.cfg, { api: 'gas', demo: false });
     Store.set('cfg', S.cfg);
   }
   bindEvents();
-  try {
-    if (!window.DOMPET_PREVIEW && !window.DOMPET_GAS && 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
-      navigator.serviceWorker.register('sw.js').catch(() => { /* abaikan */ });
-    }
-  } catch (e) { /* abaikan */ }
+  setupServiceWorker();
   if (window.DOMPET_PREVIEW && !S.cfg.demo) { startDemo(); return; }   // hanya untuk halaman pratinjau
   if (S.cfg.demo || (S.cfg.api && S.cfg.token)) enterApp();
   else showAuth();

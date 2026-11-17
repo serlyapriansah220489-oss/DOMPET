@@ -3,6 +3,8 @@
    ===================================================================== */
 'use strict';
 
+const ASSETS_JS_VERSION = '1.1.1';
+
 const ACC_TYPES = ['Tunai', 'Bank', 'E-wallet', 'Lainnya'];
 const GOLD_TYPES = ['Antam', 'UBS', 'Galeri24', 'Lotus Archi', 'Perhiasan', 'Emas digital'];
 const GOLD_PURITY = ['24K (999,9)', '23K', '22K', '18K', '17K', '16K'];
@@ -116,9 +118,23 @@ function assetHomeCard() {
 }
 
 /* ---------- Tab Aset ---------- */
+/** Kode Apps Script lama (v1.0) belum punya fitur Aset */
+function serverTooOld() {
+  const v = S.meta && S.meta.version;
+  if (!v || S.cfg.demo) return false;
+  const [a, b] = String(v).split('.').map(Number);
+  return a < 1 || (a === 1 && b < 1);
+}
+
 function renderAssets() {
   const body = $('#assetsBody');
   if (!S.loaded && !S.assets.accounts.length && !S.assets.gold.length) { body.innerHTML = skeleton(); return; }
+  if (serverTooOld()) {
+    body.innerHTML = `<div class="card empty"><div class="empty-art">${icon('info')}</div><h3>Perbarui kode Apps Script</h3>
+      <p>Tampilan sudah versi ${esc(APP_VERSION)}, tetapi kode Apps Script di spreadsheetmu masih versi ${esc(S.meta.version)}. Fitur Dana &amp; Emas butuh kode versi 1.1.</p>
+      <p class="card-sub" style="margin-top:10px">Buka spreadsheet → Ekstensi → Apps Script → ganti semua isi Code.gs dengan kode baru → Simpan → Terapkan → Kelola deployment → ✏️ → Versi: <b>Versi baru</b> → Terapkan. Lalu tutup dan buka ulang aplikasi ini.</p></div>`;
+    return;
+  }
   const b = balances(); const g = goldCalc();
   const tab = S.ui.assetTab === 'emas' ? 'emas' : 'dana';
   let html = `<div class="hero hero-asset">
